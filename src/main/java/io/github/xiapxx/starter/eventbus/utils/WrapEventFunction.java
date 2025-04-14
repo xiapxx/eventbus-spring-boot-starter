@@ -1,6 +1,6 @@
 package io.github.xiapxx.starter.eventbus.utils;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * @Author xiapeng
@@ -9,6 +9,6 @@ import java.util.Collection;
 @FunctionalInterface
 public interface WrapEventFunction<INPUT, EVENT> {
 
-    EVENT wrap(Collection<INPUT> inputs);
+    EVENT wrap(List<INPUT> inputs);
 
 }
