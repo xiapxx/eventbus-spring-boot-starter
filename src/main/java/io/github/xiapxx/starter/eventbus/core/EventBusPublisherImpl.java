@@ -100,16 +100,27 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
                     return ResolvableType.forClass(eventListener.getClass()).as(supperClass).getGeneric().resolve();
                 }));
 
-        Class eventClass = eventClass2ListenerListMap.entrySet()
+        checkMulti(eventClass2ListenerListMap);
+        this.eventClass2ListenerMap = eventClass2ListenerListMap.entrySet()
+                .stream()
+                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue().get(0)));
+    }
+
+    /**
+     * 校验, 一个事件对象不允许有多个事件监听器
+     *
+     * @param eventClass2ListenerListMap eventClass2ListenerListMap
+     */
+    private void checkMulti(Map<Class, List<IEventListener>> eventClass2ListenerListMap) {
+        Class multiEventListenerEventClass = eventClass2ListenerListMap.entrySet()
                 .stream()
                 .filter(entry -> entry.getValue().size() > 1)
                 .map(entry -> entry.getKey())
                 .findAny().orElse(null);
-        Assert.isNull(eventClass, "找到多个事件监听器(期望1个) : " + eventClass.getName());
 
-        this.eventClass2ListenerMap = eventClass2ListenerListMap.entrySet()
-                .stream()
-                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue().get(0)));
+        if(multiEventListenerEventClass != null){
+            throw new IllegalArgumentException("找到多个事件监听器(期望1个) : " + multiEventListenerEventClass.getName());
+        }
     }
 
     /**
