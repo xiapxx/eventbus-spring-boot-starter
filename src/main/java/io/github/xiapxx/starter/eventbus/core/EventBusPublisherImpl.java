@@ -1,5 +1,6 @@
 package io.github.xiapxx.starter.eventbus.core;
 
+import io.github.xiapxx.starter.eventbus.core.simple.RunnableEventListener;
 import io.github.xiapxx.starter.eventbus.entity.EventParallelResponse;
 import io.github.xiapxx.starter.eventbus.enums.RejectedPolicyEnum;
 import io.github.xiapxx.starter.eventbus.interfaces.BatchEventListener;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
  * @Date 2025-04-10 15:00
  */
 public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializingSingleton, DisposableBean, ApplicationContextAware {
+    private static final RunnableEventListener RUNNABLE_EVENT_LISTENER = new RunnableEventListener();
 
     private ApplicationContext applicationContext;
 
@@ -138,6 +140,19 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
     }
 
     /**
+     * 执行Runnable
+     *
+     * @param runnable runnable
+     */
+    @Override
+    public void execute(Runnable runnable) {
+        if(runnable == null){
+            return;
+        }
+        eventExecutor.execute(runnable, RUNNABLE_EVENT_LISTENER);
+    }
+
+    /**
      * 发布并行的事件
      *
      * @param events events
@@ -153,6 +168,20 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
 
         Class eventClass = event.getClass();
         return new EventParallelResponse(eventExecutor.executeParallel(events, getIEventListener(eventClass)));
+    }
+
+    /**
+     * 执行Runnable的并行事件
+     *
+     * @param events events
+     * @return 结果; 如果不想等待并行结果, 对结果不做任何操作即可; 如果系统等待并行事件完成, 调用waitComplete方法
+     */
+    @Override
+    public EventParallelResponse executeParallel(Collection<Runnable> events) {
+        if(events == null || events.isEmpty()){
+            return EventParallelResponse.NO_PARALLEL;
+        }
+        return new EventParallelResponse(eventExecutor.executeParallel(events, RUNNABLE_EVENT_LISTENER));
     }
 
     /**

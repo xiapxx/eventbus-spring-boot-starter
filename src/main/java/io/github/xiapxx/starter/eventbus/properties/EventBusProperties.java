@@ -25,7 +25,7 @@ public class EventBusProperties implements InitializingBean {
     /**
      * 调度线程的调度间隔(单位: 秒)
      * 使用场景:
-     *    存在IEventListener的事件监听器(rejectedPolicy=RejectedPolicyEnum.SCHEDULE_RUNS), 且达到处理上线时, 使用调度线程处理事件
+     *    存在IEventListener的事件监听器(rejectedPolicy=RejectedPolicyEnum.SCHEDULE_RUNS), 且达到处理上限时, 使用调度线程处理事件
      */
     private Integer interval = 60;
 

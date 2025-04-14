@@ -32,7 +32,7 @@ public class EventExecutor implements RejectedExecutionHandler {
 
     private BatchEventFactory batchEventFactory;
 
-    public EventExecutor(EventBusProperties eventBusProperties, boolean useEventScheduler,
+    EventExecutor(EventBusProperties eventBusProperties, boolean useEventScheduler,
                          List<BatchEventListener> batchEventListenerList) {
         this.eventBusProperties = eventBusProperties;
         loadThreadPoolExecutor();
@@ -76,7 +76,7 @@ public class EventExecutor implements RejectedExecutionHandler {
         this.eventScheduler = new EventScheduler(eventBusProperties.getInterval());
     }
 
-    public <EVENT> CompletableFuture<Void> executeParallel(Collection<EVENT> eventColl, IEventListener eventListener) {
+    <EVENT> CompletableFuture<Void> executeParallel(Collection<EVENT> eventColl, IEventListener eventListener) {
         CompletableFuture[] completableFutures = new CompletableFuture[eventColl.size()];
         int index = 0;
         for (EVENT event : eventColl) {
@@ -92,7 +92,7 @@ public class EventExecutor implements RejectedExecutionHandler {
      * @param event event
      * @param eventListener eventListener
      */
-    public void execute(Object event, IEventListener eventListener) {
+    void execute(Object event, IEventListener eventListener) {
         if(BatchEventListener.class.isAssignableFrom(eventListener.getClass()) && batchEventFactory != null){
             batchEventFactory.add(event, (BatchEventListener) eventListener);
             return;
@@ -100,7 +100,7 @@ public class EventExecutor implements RejectedExecutionHandler {
         threadPoolExecutor.execute(new EventRunnable(eventListener, event));
     }
 
-    public void close(){
+    void close(){
         if(this.threadPoolExecutor != null){
             threadPoolExecutor.shutdown();
         }
