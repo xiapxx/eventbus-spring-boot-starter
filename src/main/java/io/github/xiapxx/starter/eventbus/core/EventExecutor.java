@@ -3,6 +3,7 @@ package io.github.xiapxx.starter.eventbus.core;
 import io.github.xiapxx.starter.eventbus.core.batch.BatchEventFactory;
 import io.github.xiapxx.starter.eventbus.entity.EventParallelResult;
 import io.github.xiapxx.starter.eventbus.enums.RejectedPolicyEnum;
+import io.github.xiapxx.starter.eventbus.exceptions.WaitResultException;
 import io.github.xiapxx.starter.eventbus.interfaces.BatchEventListener;
 import io.github.xiapxx.starter.eventbus.interfaces.EventResultListener;
 import io.github.xiapxx.starter.eventbus.interfaces.IEventListener;
@@ -94,7 +95,7 @@ public class EventExecutor implements RejectedExecutionHandler {
 
     <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> executeParallelAndWaitResult(Collection<EVENT> eventColl,
                                                                  EventResultListener<EVENT, RESULT> eventListener,
-                                                                 long timeout, TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
+                                                                 long timeout, TimeUnit timeUnit) {
         Map<EVENT, EventParallelResult<RESULT>> event2ParallelResultMap = new ConcurrentHashMap<>(eventColl.size());
         CompletableFuture[] completableFutures = new CompletableFuture[eventColl.size()];
         int index = 0;
@@ -103,12 +104,16 @@ public class EventExecutor implements RejectedExecutionHandler {
             index++;
         }
         CompletableFuture<Void> voidCompletableFuture = CompletableFuture.allOf(completableFutures);
-        if(timeUnit == null || timeout <= 0){
-            voidCompletableFuture.get();
+        try {
+            if(timeUnit == null || timeout <= 0){
+                voidCompletableFuture.get();
+                return event2ParallelResultMap;
+            }
+            voidCompletableFuture.get(timeout, timeUnit);
             return event2ParallelResultMap;
+        } catch (Throwable e) {
+            throw new WaitResultException(e);
         }
-        voidCompletableFuture.get(timeout, timeUnit);
-        return event2ParallelResultMap;
     }
 
     /**

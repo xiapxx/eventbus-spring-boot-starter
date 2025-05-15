@@ -57,6 +57,8 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
      * @return 事件监听器
      */
     private IEventListener getIEventListener(Class eventClass) {
+        Assert.notNull(eventClass2ListenerMap, "未找到有效的事件监听器 : " + eventClass.getName());
+
         IEventListener eventListener = eventClass2ListenerMap.get(eventClass);
         Assert.notNull(eventListener, "未找到有效的事件监听器 : " + eventClass.getName());
         return eventListener;
@@ -160,7 +162,7 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
      * @throws Throwable 可能抛出超时异常
      */
     @Override
-    public <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> publishParallelAndWaitResult(Collection<EVENT> events) throws Throwable {
+    public <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> publishParallelAndWaitResult(Collection<EVENT> events) {
         return publishParallelAndWaitResult(events, -1, null);
     }
 
@@ -175,8 +177,7 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
      */
     @Override
     public <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> publishParallelAndWaitResult(Collection<EVENT> events,
-                                                                                   long timeout, TimeUnit timeUnit)
-            throws Throwable {
+                                                                                   long timeout, TimeUnit timeUnit) {
 
         if(events == null || events.isEmpty()){
             return null;
