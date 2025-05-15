@@ -2,9 +2,11 @@ package io.github.xiapxx.starter.eventbus.core;
 
 import io.github.xiapxx.starter.eventbus.core.simple.RunnableEventListener;
 import io.github.xiapxx.starter.eventbus.entity.EventParallelResponse;
+import io.github.xiapxx.starter.eventbus.entity.EventParallelResult;
 import io.github.xiapxx.starter.eventbus.enums.RejectedPolicyEnum;
 import io.github.xiapxx.starter.eventbus.interfaces.BatchEventListener;
 import io.github.xiapxx.starter.eventbus.interfaces.EventBusPublisher;
+import io.github.xiapxx.starter.eventbus.interfaces.EventResultListener;
 import io.github.xiapxx.starter.eventbus.interfaces.IEventListener;
 import io.github.xiapxx.starter.eventbus.properties.EventBusProperties;
 import io.github.xiapxx.starter.eventbus.utils.EventObjectUtils;
@@ -19,6 +21,7 @@ import org.springframework.util.Assert;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -62,9 +65,6 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
     @Override
     public void afterSingletonsInstantiated() {
         loadEventClass2ListenerMap();
-        if(eventClass2ListenerMap == null || eventClass2ListenerMap.isEmpty()){
-            return;
-        }
         loadEventExecutor();
     }
 
@@ -72,9 +72,9 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
      * 加载EventExecutor
      */
     private void loadEventExecutor() {
-        boolean useEventScheduler = eventClass2ListenerMap.values()
+        boolean useEventScheduler = eventClass2ListenerMap == null ? false : eventClass2ListenerMap.values()
                 .stream().anyMatch(item -> item.rejectedPolicy() == RejectedPolicyEnum.SCHEDULE_RUNS);
-        List<BatchEventListener> batchEventListeners = eventClass2ListenerMap.values().stream()
+        List<BatchEventListener> batchEventListeners = eventClass2ListenerMap == null ? null : eventClass2ListenerMap.values().stream()
                 .filter(item -> item instanceof BatchEventListener)
                 .map(item -> (BatchEventListener) item)
                 .collect(Collectors.toList());
@@ -150,6 +150,32 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
             return;
         }
         eventExecutor.execute(runnable, RUNNABLE_EVENT_LISTENER);
+    }
+
+    /**
+     * 发布并行事件(并且汇总每个事件的结构, 成功与否)
+     *
+     * @param events events
+     * @param timeout 超时时间
+     * @param timeUnit 超时时间单位
+     * @return 结果; key=原始事件对象 value=结果
+     * @throws Throwable 可能抛出超时异常
+     */
+    @Override
+    public <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> publishParallel(Collection<EVENT> events,
+                                                                                   long timeout, TimeUnit timeUnit)
+            throws Throwable {
+
+        if(events == null || events.isEmpty()){
+            return null;
+        }
+        EVENT event = events.stream().findFirst().orElse(null);
+        Assert.notNull(event, "不允许有空的事件对象");
+
+        IEventListener eventListener = getIEventListener(event.getClass());
+        Assert.isTrue(eventListener instanceof EventResultListener, "事件监听器必须是EventResultListener类型");
+
+        return eventExecutor.executeParallelAndWaitResult(events, (EventResultListener<EVENT, RESULT>) eventListener, timeout, timeUnit);
     }
 
     /**

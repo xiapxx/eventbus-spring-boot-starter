@@ -1,20 +1,26 @@
 package io.github.xiapxx.starter.eventbus.core;
 
 import io.github.xiapxx.starter.eventbus.core.batch.BatchEventFactory;
+import io.github.xiapxx.starter.eventbus.entity.EventParallelResult;
 import io.github.xiapxx.starter.eventbus.enums.RejectedPolicyEnum;
 import io.github.xiapxx.starter.eventbus.interfaces.BatchEventListener;
+import io.github.xiapxx.starter.eventbus.interfaces.EventResultListener;
 import io.github.xiapxx.starter.eventbus.interfaces.IEventListener;
 import io.github.xiapxx.starter.eventbus.properties.EventBusProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @Author xiapeng
@@ -84,6 +90,25 @@ public class EventExecutor implements RejectedExecutionHandler {
             index++;
         }
         return CompletableFuture.allOf(completableFutures);
+    }
+
+    <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> executeParallelAndWaitResult(Collection<EVENT> eventColl,
+                                                                 EventResultListener<EVENT, RESULT> eventListener,
+                                                                 long timeout, TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
+        Map<EVENT, EventParallelResult<RESULT>> event2ParallelResultMap = new ConcurrentHashMap<>(eventColl.size());
+        CompletableFuture[] completableFutures = new CompletableFuture[eventColl.size()];
+        int index = 0;
+        for (EVENT event : eventColl) {
+            completableFutures[index] = CompletableFuture.runAsync(new EventRunnable(eventListener, event2ParallelResultMap, event), threadPoolExecutor);
+            index++;
+        }
+        CompletableFuture<Void> voidCompletableFuture = CompletableFuture.allOf(completableFutures);
+        if(timeUnit == null || timeout <= 0){
+            voidCompletableFuture.get();
+            return event2ParallelResultMap;
+        }
+        voidCompletableFuture.get(timeout, timeUnit);
+        return event2ParallelResultMap;
     }
 
     /**
