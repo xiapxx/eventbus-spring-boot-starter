@@ -162,8 +162,8 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
      * @throws Throwable 可能抛出超时异常
      */
     @Override
-    public <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> publishParallelAndWaitResult(Collection<EVENT> events) {
-        return publishParallelAndWaitResult(events, -1, null);
+    public <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> submitParallel(Collection<EVENT> events) {
+        return submitParallel(events, -1, null);
     }
 
     /**
@@ -176,8 +176,8 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
      * @throws Throwable 可能抛出超时异常
      */
     @Override
-    public <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> publishParallelAndWaitResult(Collection<EVENT> events,
-                                                                                   long timeout, TimeUnit timeUnit) {
+    public <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> submitParallel(Collection<EVENT> events,
+                                                                                  long timeout, TimeUnit timeUnit) {
 
         if(events == null || events.isEmpty()){
             return null;

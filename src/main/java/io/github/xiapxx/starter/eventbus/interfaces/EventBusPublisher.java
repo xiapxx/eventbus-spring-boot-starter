@@ -33,7 +33,7 @@ public interface EventBusPublisher {
      * @param events events
      * @return 结果; key=原始事件对象 value=结果
      */
-    <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> publishParallelAndWaitResult(Collection<EVENT> events);
+    <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> submitParallel(Collection<EVENT> events);
 
     /**
      * 发布并行事件(并且汇总每个事件的结果)
@@ -43,7 +43,7 @@ public interface EventBusPublisher {
      * @param timeUnit 超时时间单位
      * @return 结果; key=原始事件对象 value=结果
      */
-    <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> publishParallelAndWaitResult(Collection<EVENT> events, long timeout, TimeUnit timeUnit);
+    <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> submitParallel(Collection<EVENT> events, long timeout, TimeUnit timeUnit);
 
     /**
      * 发布并行的事件
