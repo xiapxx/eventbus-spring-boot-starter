@@ -9,7 +9,7 @@
 <dependency>
     <groupId>io.github.xiapxx</groupId>
     <artifactId>eventbus-spring-boot-starter</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.5</version>
 </dependency>
 ~~~~
 ~~~~xml
@@ -123,9 +123,24 @@
             return 1000;
         }
 
-        // 定义如果不满flushSize个数, 最晚多久调用onEvent方法(可选), 默认15秒
+        /**
+         * 刷新时间(单位: 秒)
+         *
+         * @return 时间(单位: 秒)
+         */
         public int flushSeconds() {
-            return 15; // 单位: 秒
+            return 15;
+        }
+    
+        /**
+         * 根据时间的刷新缓存区方式
+         *
+         * @return
+         *     FlushSecondsTypeEnum.IDLE时,  当前时间 - 缓存区中最后一条事件的推送时间 >= {flushSeconds}秒; 即使没有达到flushSize, 也会交给监听器处理
+         *     FlushSecondsTypeEnum.FIXED时, 当前时间 - 缓存区中第一条事件的推送时间 >= {flushSeconds}秒; 即使没有达到flushSize, 也会交给监听器处理
+         */
+        public FlushSecondsTypeEnum flushSecondsType() {
+            return FlushSecondsTypeEnum.FIXED;
         }
                 
         public void onEvent(LinkedList<XXXEvent> events) {

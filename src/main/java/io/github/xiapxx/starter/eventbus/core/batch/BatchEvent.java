@@ -1,7 +1,6 @@
 package io.github.xiapxx.starter.eventbus.core.batch;
 
 import io.github.xiapxx.starter.eventbus.core.EventRunnable;
-import io.github.xiapxx.starter.eventbus.enums.FlushSecondsTypeEnum;
 import io.github.xiapxx.starter.eventbus.interfaces.BatchEventListener;
 import java.util.LinkedList;
 import java.util.concurrent.ThreadPoolExecutor;
