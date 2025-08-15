@@ -5,6 +5,7 @@ import io.github.xiapxx.starter.eventbus.entity.EventParallelResponse;
 import io.github.xiapxx.starter.eventbus.entity.EventParallelResult;
 import io.github.xiapxx.starter.eventbus.enums.RejectedPolicyEnum;
 import io.github.xiapxx.starter.eventbus.interfaces.BatchEventListener;
+import io.github.xiapxx.starter.eventbus.interfaces.CallableEventListener;
 import io.github.xiapxx.starter.eventbus.interfaces.EventBusPublisher;
 import io.github.xiapxx.starter.eventbus.interfaces.EventResultListener;
 import io.github.xiapxx.starter.eventbus.interfaces.IEventListener;
@@ -207,6 +208,47 @@ public class EventBusPublisherImpl implements EventBusPublisher, SmartInitializi
 
         Class eventClass = event.getClass();
         return new EventParallelResponse(eventExecutor.executeParallel(events, getIEventListener(eventClass)));
+    }
+
+    /**
+     * 发布有回调的并行事件(该类事件需实现CallableEventListener接口)
+     *
+     * @param events events
+     */
+    @Override
+    public <EVENT> void callableParallel(Collection<EVENT> events) {
+        callableParallel(events, 0, null);
+    }
+
+    /**
+     * 异步回调的事件监听器
+     *
+     * @param events events
+     * @param timeout timeout
+     * @param timeUnit timeUnit
+     */
+    @Override
+    public <EVENT> void callableParallel(Collection<EVENT> events, long timeout, TimeUnit timeUnit) {
+        if(events == null || events.isEmpty()){
+            return;
+        }
+
+        EVENT event = events.stream().findFirst().orElse(null);
+        Assert.notNull(event, "不允许有空的事件对象");
+
+        IEventListener eventListener = getIEventListener(event.getClass());
+        Assert.isTrue(eventListener instanceof CallableEventListener, "事件监听器必须是CallableEventListener类型");
+
+        CallableEventListener<EVENT> callableEventListener = (CallableEventListener<EVENT>) eventListener;
+
+        execute(() -> {
+            try {
+                EventParallelResponse eventParallelResponse = new EventParallelResponse(eventExecutor.executeParallel(events, callableEventListener));
+                eventParallelResponse.waitComplete(timeout, timeUnit);
+            } finally {
+                callableEventListener.callback(events);
+            }
+        });
     }
 
     /**

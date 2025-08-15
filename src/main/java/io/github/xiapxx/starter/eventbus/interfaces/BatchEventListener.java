@@ -6,6 +6,7 @@ import java.util.LinkedList;
 /**
  * 批次事件处理监听器
  *
+ * @see EventBusPublisher#publish
  * @Author xiapeng
  * @Date 2025-04-10 14:50
  */

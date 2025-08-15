@@ -28,7 +28,7 @@ public interface EventBusPublisher {
     void execute(Runnable runnable);
 
     /**
-     * 发布并行事件(并且汇总每个事件的结果)
+     * 发布并行事件(并且汇总每个事件的结果, 该类事件需实现EventResultListener接口)
      *
      * @param events events
      * @return 结果; key=原始事件对象 value=结果
@@ -36,7 +36,7 @@ public interface EventBusPublisher {
     <EVENT, RESULT> Map<EVENT, EventParallelResult<RESULT>> submitParallel(Collection<EVENT> events);
 
     /**
-     * 发布并行事件(并且汇总每个事件的结果)
+     * 发布并行事件(并且汇总每个事件的结果, 该类事件需实现EventResultListener接口)
      *
      * @param events events
      * @param timeout 超时时间
@@ -52,6 +52,22 @@ public interface EventBusPublisher {
      * @return 结果; 如果不想等待并行结果, 对结果不做任何操作即可; 如果系统等待并行事件完成, 调用waitComplete方法
      */
     <EVENT> EventParallelResponse publishParallel(Collection<EVENT> events);
+
+    /**
+     * 发布有回调的并行事件(该类事件需实现CallableEventListener接口)
+     *
+     * @param events events
+     */
+    <EVENT> void callableParallel(Collection<EVENT> events);
+
+    /**
+     * 发布有回调的并行事件(该类事件需实现CallableEventListener接口)
+     *
+     * @param events events
+     * @param timeout timeout
+     * @param timeUnit timeUnit
+     */
+    <EVENT> void callableParallel(Collection<EVENT> events, long timeout, TimeUnit timeUnit);
 
     /**
      * 执行Runnable的并行事件
