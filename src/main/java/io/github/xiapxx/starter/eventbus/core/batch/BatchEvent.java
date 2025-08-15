@@ -1,6 +1,7 @@
 package io.github.xiapxx.starter.eventbus.core.batch;
 
 import io.github.xiapxx.starter.eventbus.core.EventRunnable;
+import io.github.xiapxx.starter.eventbus.enums.FlushSecondsTypeEnum;
 import io.github.xiapxx.starter.eventbus.interfaces.BatchEventListener;
 import java.util.LinkedList;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -17,22 +18,38 @@ public class BatchEvent<EVENT> {
 
     private volatile LinkedList<EVENT> eventList;
 
-    private volatile long lastTimeMills;
+    private volatile long pushTimeMills;
 
     BatchEvent(ThreadPoolExecutor threadPoolExecutor, BatchEventListener<EVENT> batchEventListener){
         this.threadPoolExecutor = threadPoolExecutor;
         this.batchEventListener = batchEventListener;
         this.eventList = new LinkedList<>();
-        this.lastTimeMills = System.currentTimeMillis();
+        this.pushTimeMills = System.currentTimeMillis();
     }
 
     void add(EVENT event) {
         synchronized (this) {
             eventList.add(event);
-            lastTimeMills = System.currentTimeMillis();
+            setPushTimeMills();
             if(eventList.size() >= batchEventListener.flushSize()){
                 doFlush();
             }
+        }
+    }
+
+    /**
+     * 设置推送时间
+     */
+    void setPushTimeMills() {
+        switch (batchEventListener.flushSecondsType()) {
+            case IDLE:
+                pushTimeMills = System.currentTimeMillis();
+                break;
+            case FIXED:
+                if (eventList.size() == 1) {
+                    pushTimeMills = System.currentTimeMillis();
+                }
+                break;
         }
     }
 
@@ -43,7 +60,7 @@ public class BatchEvent<EVENT> {
     }
 
     /**
-     * 尝试刷新数据
+     * 尝试清空缓冲区数据
      */
     void tryFlush() {
         if(!canFlush()){
@@ -66,7 +83,7 @@ public class BatchEvent<EVENT> {
         if(eventList == null || eventList.isEmpty()){
             return false;
         }
-        long idleSeconds = (System.currentTimeMillis() - lastTimeMills) / 1000;
+        long idleSeconds = (System.currentTimeMillis() - pushTimeMills) / 1000;
         return idleSeconds >= batchEventListener.flushSeconds();
     }
 

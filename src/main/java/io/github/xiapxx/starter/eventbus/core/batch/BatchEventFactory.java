@@ -24,7 +24,7 @@ public class BatchEventFactory implements Runnable {
         this.batchEventListener2BatchEventMap = batchEventListenerList
                 .stream().collect(Collectors.toMap(item -> item, item -> new BatchEvent(threadPoolExecutor, item)));
         this.scheduler = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(1);
-        this.scheduler.scheduleWithFixedDelay(this, 10, 5, TimeUnit.SECONDS);
+        this.scheduler.scheduleWithFixedDelay(this, 10, 3, TimeUnit.SECONDS);
     }
 
     public <EVENT> void add(EVENT event, BatchEventListener<EVENT> batchEventListener){
