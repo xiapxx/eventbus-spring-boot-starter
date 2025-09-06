@@ -13,6 +13,7 @@
     <scm>
         <url>https://github.com/xiapxx/eventbus-spring-boot-starter.git</url>
     </scm>
+    <name>基于线程池实现的事件总线</name>
     <description>基于线程池实现的事件总线</description>
     <developers>
         <developer>
