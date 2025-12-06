@@ -146,32 +146,24 @@ public class EventExecutor implements RejectedExecutionHandler {
 
     @Override
     public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-        doReject(r, executor);
-    }
-
-    private void doReject(Runnable r, ThreadPoolExecutor executor) {
         if (!(r instanceof EventRunnable)) {
-            if (!executor.isShutdown()) {
-                r.run();
-            }
+            callerRun(r, executor);
             return;
         }
 
         EventRunnable eventRunnable = (EventRunnable) r;
+        String eventClassName = eventRunnable.event.getClass().getName();
         RejectedPolicyEnum rejectedPolicyEnum = eventRunnable.eventListener.rejectedPolicy();
 
-        log.error("事件溢出 : 事件对象 = {}, 当前拒绝策略 = {}",
-                eventRunnable.event.getClass().getName(), rejectedPolicyEnum.name());
+        log.error("事件溢出 : 事件对象 = {}, 当前拒绝策略 = {}", eventClassName, rejectedPolicyEnum.name());
 
         switch (rejectedPolicyEnum) {
             case DISCARD:
                 return;
             case EXCEPTION:
-                throw new RejectedExecutionException("事件溢出: " + eventRunnable.event.getClass().getName());
+                throw new RejectedExecutionException("事件溢出: " + eventClassName);
             case CALLER_RUNS:
-                if(!executor.isShutdown()){
-                    eventRunnable.run();
-                }
+                callerRun(r, executor);
                 return;
             case SCHEDULE_RUNS:
                 if (eventScheduler != null) {
@@ -180,5 +172,23 @@ public class EventExecutor implements RejectedExecutionHandler {
                 return;
         }
     }
+
+    /**
+     * 调用者执行
+     *
+     * @param r r
+     * @param executor executor
+     */
+    private void callerRun(Runnable r, ThreadPoolExecutor executor) {
+        if (!executor.isShutdown()) {
+            EventRejectMonitor.set();
+            try {
+                r.run();
+            } finally {
+                EventRejectMonitor.remove();
+            }
+        }
+    }
+
 
 }
