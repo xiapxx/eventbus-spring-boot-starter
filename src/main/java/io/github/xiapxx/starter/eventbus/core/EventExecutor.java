@@ -10,6 +10,8 @@ import io.github.xiapxx.starter.eventbus.interfaces.IEventListener;
 import io.github.xiapxx.starter.eventbus.properties.EventBusProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -144,8 +146,15 @@ public class EventExecutor implements RejectedExecutionHandler {
 
     @Override
     public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+        doReject(r, executor);
+    }
+
+    private void doReject(Runnable r, ThreadPoolExecutor executor) {
         if (!(r instanceof EventRunnable)) {
-            throw new RejectedExecutionException("事件溢出 : " + r.getClass());
+            if (!executor.isShutdown()) {
+                r.run();
+            }
+            return;
         }
 
         EventRunnable eventRunnable = (EventRunnable) r;
@@ -155,11 +164,6 @@ public class EventExecutor implements RejectedExecutionHandler {
                 eventRunnable.event.getClass().getName(), rejectedPolicyEnum.name());
 
         switch (rejectedPolicyEnum) {
-            case RUN_REJECT_METHOD:
-                if (!executor.isShutdown()) {
-                    eventRunnable.doRun(true);
-                }
-                return;
             case DISCARD:
                 return;
             case EXCEPTION:
@@ -170,11 +174,11 @@ public class EventExecutor implements RejectedExecutionHandler {
                 }
                 return;
             case SCHEDULE_RUNS:
-                if(eventScheduler != null){
+                if (eventScheduler != null) {
                     eventScheduler.add(eventRunnable);
                 }
                 return;
         }
-
     }
+
 }

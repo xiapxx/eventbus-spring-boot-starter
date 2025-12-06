@@ -35,10 +35,6 @@ public class EventRunnable<EVENT> implements Runnable {
 
     @Override
     public void run() {
-        doRun(false);
-    }
-
-    void doRun(boolean callRejectMethod) {
         long start = System.currentTimeMillis();
         boolean isEventResultListener = eventListener instanceof EventResultListener;
         boolean success = false;
@@ -47,15 +43,13 @@ public class EventRunnable<EVENT> implements Runnable {
                 EventResultListener eventResultListener = (EventResultListener) eventListener;
                 Object innerResult = eventResultListener.onEventResult(event);
                 event2ParallelResultMap.put(event, EventParallelResult.success(innerResult));
-            } else if(callRejectMethod) {
-                eventListener.reject(event);
             } else {
                 eventListener.onEvent(event);
             }
             success = true;
         } catch (Throwable e) {
             log.error("", e);
-            if(isEventResultListener){
+            if (isEventResultListener) {
                 event2ParallelResultMap.put(event, EventParallelResult.fail(e));
             }
         } finally {
@@ -66,4 +60,5 @@ public class EventRunnable<EVENT> implements Runnable {
             );
         }
     }
+
 }

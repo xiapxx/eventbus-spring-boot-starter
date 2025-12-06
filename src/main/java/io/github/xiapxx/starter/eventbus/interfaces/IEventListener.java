@@ -12,13 +12,6 @@ public interface IEventListener<E> {
 
     void onEvent(E event);
 
-    /**
-     * 当RejectedPolicyEnum.RUN_REJECT_METHOD 并且 任务饱和 时执行该方法
-     *
-     * @param event event
-     */
-    default void reject(E event) {
-    }
 
     /**
      * 当事件个数处理达到上限时的拒绝策略
