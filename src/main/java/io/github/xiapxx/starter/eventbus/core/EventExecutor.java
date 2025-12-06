@@ -156,7 +156,9 @@ public class EventExecutor implements RejectedExecutionHandler {
 
         switch (rejectedPolicyEnum) {
             case RUN_REJECT_METHOD:
-                eventRunnable.doRun(true);
+                if (!executor.isShutdown()) {
+                    eventRunnable.doRun(true);
+                }
                 return;
             case DISCARD:
                 return;
