@@ -9,6 +9,7 @@ package io.github.xiapxx.starter.eventbus.enums;
 public enum RejectedPolicyEnum {
     DISCARD,  // 直接丢弃
     CALLER_RUNS, // 调用线程执行
+    RUN_REJECT_METHOD, // 调用拒绝方法
     EXCEPTION, //抛出异常
     SCHEDULE_RUNS; // 调度线程执行
 

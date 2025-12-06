@@ -144,6 +144,10 @@ public class EventExecutor implements RejectedExecutionHandler {
 
     @Override
     public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+        if (!(r instanceof EventRunnable)) {
+            throw new RejectedExecutionException("事件溢出 : " + r.getClass());
+        }
+
         EventRunnable eventRunnable = (EventRunnable) r;
         RejectedPolicyEnum rejectedPolicyEnum = eventRunnable.eventListener.rejectedPolicy();
 
@@ -151,6 +155,9 @@ public class EventExecutor implements RejectedExecutionHandler {
                 eventRunnable.event.getClass().getName(), rejectedPolicyEnum.name());
 
         switch (rejectedPolicyEnum) {
+            case RUN_REJECT_METHOD:
+                eventRunnable.doRun(true);
+                return;
             case DISCARD:
                 return;
             case EXCEPTION:
